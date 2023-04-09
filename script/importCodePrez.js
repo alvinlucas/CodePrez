@@ -1,60 +1,83 @@
 const { dialog, BrowserWindow } = require('electron')
 const path = require('path')
 const fs = require('fs')
-const { app } = require('electron')
+const MarkdownIt = require('markdown-it')
+const hljs = require('highlight.js')
+const { unzipFile } = require('./unzip.js')
 
-const importCodePrez = () => {
+const importCodePrez =  async() => {
   // Ouvre une boîte de dialogue pour sélectionner un fichier .codePrez
-  const selectedFile = dialog.showOpenDialogSync({
+  const selectedFile = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow,{
     filters: [
-      { name: 'codePrez', extensions: ['codePrez'] }
-    ]
-  })
+      {  extensions: ['codeprez'] }
+    ],
+    properties: ['openFile']
+    
+  });
 
   // Vérifie si un fichier a été sélectionné
-  if (!selectedFile || selectedFile.length === 0) {
-    return
-  }
+  if (!selectedFile.canceled) {
+    
+  
 
   // Crée un dossier temporaire pour extraire le fichier .codePrez
-  const tempFolder = app.getPath('temp')
-  const folderName = `codePrez_${Date.now()}`
-  const folderPath = path.join(tempFolder, folderName)
-  fs.mkdirSync(folderPath)
 
-  // Copie le contenu du fichier .codePrez dans un fichier content.md dans le dossier temporaire
-  const contentPath = path.join(folderPath, 'content.md')
-  const fileContent = fs.readFileSync(selectedFile[0], 'utf-8')
-  fs.writeFileSync(contentPath, fileContent)
+  const filePaths = selectedFile.filePaths[0]
+  const fileName = path.basename(filePaths, '.codeprez')
+  const zipPath = path.join(path.dirname(filePaths), `${fileName}.zip`)	
+  const zipDirectory = await unzipFile(zipPath)
+  console.log(zipDirectory)
+  const zipFiles = await fs.readdirSync(zipDirectory)
 
-  // Copie les styles du fichier .codePrez dans un fichier styles.css dans le dossier temporaire
-  const cssPath = path.join(folderPath, 'styles.css')
-  const stylesStartIndex = fileContent.indexOf('/* styles */')
-  if (stylesStartIndex !== -1) {
-    const styles = fileContent.slice(stylesStartIndex)
-    fs.writeFileSync(cssPath, styles)
+  
+  // Extrait les fichiers .md, .css et .json de zipFiles
+  const mdFiles = zipFiles.filter(file => path.extname(file) === '.md')
+  const cssFiles = zipFiles.filter(file => path.extname(file) === '.css')
+  const jsonFiles = zipFiles.filter(file => path.extname(file) === '.json')
+
+  // Construit le chemin vers les fichiers .md, .css et .json
+  const mdPath = path.join(zipDirectory, mdFiles[0])
+  const cssPath = path.join(zipDirectory, cssFiles[0])
+  const jsonPath = path.join(zipDirectory, jsonFiles[0])
+
+  // Recupère le contenu du fichiers .md
+  const fileContent = await fs.readFileSync(mdPath, 'utf8')
+  
+  const listSection = []
+
+  // Découpe le contenu du fichier content.md en diapositives et englobe chaque segment dans une balise <section>
+  const md = new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true,
+    langPrefix: 'language-',
+    breaks: false,
+    linkify: true,
+    typographer: true,
+    quotes: '“”‘’```',
+    highlight: function (code, lang) {
+      if (lang && hljs.getLanguage(lang)) {
+        try {
+          return `<pre class="hljs"><code><div>${hljs.highlight(lang, code, true).value}</div></code></pre>`;
+        } catch (__) {}
+      }
+      return `<pre class="hljs"><code><div>${md.utils.escapeHtml(code)}</div></code></pre>`;
+    }
+  });
+
+
+  const sections = fileContent.split('\n\n---\n\n')
+    .map((sectionContent) => {
+     const section = md.render(sectionContent)
+     const sectionWithTags = `<section>${section}</section>`
+     listSection.push(sectionWithTags)
+    });
+  
+
+
+BrowserWindow.getFocusedWindow().webContents.send('importCodePrez', {sections: listSection, cssPath: cssPath})
+
   }
-
-  // Ouvre le fichier content.md dans une nouvelle fenêtre
-  const contentWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true
-    }
-  })
-
-  contentWindow.loadFile('public/index.html', {
-    query: {
-      contentPath,
-      cssPath
-    }
-  })
-
-  // Nettoie le dossier temporaire
-  contentWindow.on('closed', () => {
-    fs.rmdirSync(folderPath, { recursive: true })
-  })
 }
 
 module.exports = {

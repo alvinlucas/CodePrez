@@ -1,5 +1,7 @@
 const { app, BrowserWindow, Menu, dialog } = require('electron');
 const { importCodePrez } = require("./script/importCodePrez.js");
+const path = require('path');
+
 
 let currentWin = null;
 
@@ -8,10 +10,14 @@ const createWindow = () => {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    webPreferences: {
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+    },
   });
 
   // Chargement du fichier HTML principal
-  win.loadFile('public/index.html');
+  win.loadFile('renderer/index.html');
   currentWin = win;
   return win;
 }

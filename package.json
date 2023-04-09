@@ -19,9 +19,14 @@
   "homepage": "https://github.com/SoulsR/appDesktop#readme",
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "marked": "^4.2.12",
+    "extract-zip": "^2.0.1",
+    "highlight.js": "^11.7.0",
+    "markdown-it": "^13.0.1",
+    "marked": "^4.3.0",
     "path": "^0.12.7",
-    "vue": "^3.2.47"
+    "unzipper": "^0.10.11",
+    "vue": "^3.2.47",
+    "window": "^4.2.7"
   },
   "devDependencies": {
     "electron": "^23.1.1"

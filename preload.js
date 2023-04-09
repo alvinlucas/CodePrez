@@ -1,20 +1,12 @@
-const { dialog } = require('electron').remote;
-const fs = require('fs');
-const marked = require('marked');
+const {contextBridge, ipcRenderer} = require("electron");
 
-window.api = {
-  openFile: async () => {
-    const result = await dialog.showOpenDialog({ properties: ['openFile'] });
-    const filePath = result.filePaths[0];
 
-    fs.readFile(filePath, 'utf-8', (err, data) => {
-      if (err) throw err;
-
-      const html = marked(data);
-      window.api.sendToRender('file-opened', { filePath, html });
+contextBridge.exposeInMainWorld("api", {
+  importCodePrez: (callback) => {
+    ipcRenderer.once("importCodePrez", (event, arg) => {
+      callback(arg);
     });
-  },
-  sendToRender: (channel, data) => {
-    window.webContents.send(channel, data);
-  }
-};
+    ipcRenderer.send("importCodePrez");
+  } 
+});
+  

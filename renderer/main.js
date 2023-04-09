@@ -1,20 +1,11 @@
-const { ipcRenderer } = require('electron');
+const diapoList = document.getElementById('diapo-list');
 
-const markdownContainer = document.getElementById('markdown-container');
-const openFileButton = document.getElementById('open-file-button');
+window.api.importCodePrez((data) => {
+  const sections = data.sections;
+  for(const section of sections) {
+    const li = document.createElement('li');
+    li.innerHTML = section;
+    diapoList.appendChild(li);
+  }
 
-openFileButton.addEventListener('click', () => {
-  window.api.openFile();
-});
-
-ipcRenderer.on('file-opened', (event, data) => {
-  const { filePath, html } = data;
-
-  markdownContainer.innerHTML = html;
-
-  document.title = `Markdown Editor - ${filePath}`;
-
-  window.api.sendToRender('file-opened', { filePath, html });
-
-  
 });
