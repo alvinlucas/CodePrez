@@ -1,0 +1,27 @@
+{
+  "name": "appdesktop",
+  "version": "1.0.0",
+  "description": "powerpoint lookalike",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoulsR/appDesktop.git"
+  },
+  "author": "amln",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SoulsR/appDesktop/issues"
+  },
+  "homepage": "https://github.com/SoulsR/appDesktop#readme",
+  "dependencies": {
+    "marked": "^4.2.12",
+    "vue": "^3.2.47"
+  },
+  "devDependencies": {
+    "electron": "^23.1.1"
+  }
+}
